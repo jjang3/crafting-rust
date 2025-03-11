@@ -1,9 +1,16 @@
 use std::env;
+use std::process;
 use std::path::Path;
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::{self, BufRead};
 use std::cell::RefCell;
+
+mod token_type;
+mod token;
+/*
+ main.rs is the root of the binary crate. This means mod token_type; directly includes token_type.rs in the crate.
+ */
 
 thread_local! { // Each thread has its own copy.
     static HAD_ERROR: RefCell<bool> = RefCell::new(false); // we wrap the bool inside a RefCell, which allows us to mutate it at runtime without mut.
@@ -43,6 +50,13 @@ fn run_file(file_path: &String) -> io::Result<()>  { // io::Result<()>, explicit
     let mut s = String::new();
     file.read_to_string(&mut s)?; // If this fails, the error is returned to the caller; ? => Error propagate
     run(&s);
+
+    HAD_ERROR.with(|had_error| {
+        if *had_error.borrow() {
+            process::exit(65);
+        }
+    });
+    
     Ok(())
 }
 
